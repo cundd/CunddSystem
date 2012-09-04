@@ -435,9 +435,8 @@ class Cundd_Core_Model_Color extends Cundd_Core_Simple{
 	
 	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
 	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
-	/* Function taken from hofstadler.andi@gmx.at at 
+	/* Function taken from Hofstadler Andi at 
 	 * http://www.php.net/manual/en/function.imagecolorsforindex.php#86198.
-	 * Thanks a lot tho hofstadler.andi@gmx.at!
 	 * /
 	/**
 	 * Convert RGB colors array into HSL array
