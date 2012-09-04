@@ -1,0 +1,21 @@
+<?php
+/**
+ * @license 
+ * @copyright 
+ * @package Demo_Flash
+ * @version 1.0
+ * @since Feb 23, 2010
+ * @author daniel
+ */
+/* 
+ * Uncomment the return statement to disable this template */
+// return false
+/*
+ * 
+ */
+$inputs = array(
+array('numberOfObjects','text',array('label' => 'Anzahl der Flash Objekte')),
+);
+$form = new CunddForm($inputs,'POST:flash_show.html');
+$form->render();
+?>

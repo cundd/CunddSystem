@@ -1,0 +1,396 @@
+<?php
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+/**
+ * @license 
+ * @copyright 
+ * Die Klasse Cundd_Vis_Model_Abstract erweitert Cundd_Core_Model_Abstract.
+ * @package Cundd_Vis
+ * @version 1.0
+ * @since Feb 16, 2010
+ * @author daniel
+ */
+abstract class Cundd_Vis_Model_Abstract extends Cundd_Core_Model_Abstract{
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	// Variablen deklarieren
+	protected $_processId;
+	protected $_parameterString = '';
+	protected $_command = '';
+	protected $_pid = '';
+	protected $_autoDispatch = NULL; // boolean
+	protected $_handler = 'Controller';
+
+
+
+	public $controller = ''; // The description of the controller called in the new process (Module/Controller)
+	public $parameters = array(); // The parameters send to the new process
+
+
+
+	const STATE_WILL_CREATE_CONTROLLER 	= '_willcreatecontroller';
+	const STATE_DID_CREATE_CONTROLLER 	= '_didcreatecontroller';
+	const STATE_ERROR_CREATE_CONTROLLER = '_errorcreatecontroller';
+
+	const STATE_COMPLETE 				= '_complete';
+	const STATE_EXCEPTION 				= '_exception';
+	const STATE_ERROR 					= '_error';
+	const STATE_CANCELED				= '_canceled';
+
+
+	const USE_PHP_INI_FILE = true;
+	const AMP_REPLACEMENT = '__CundD_AmpReplacement__';
+	const SERIALIZED_PREFIX = '__CundD_Serialized__';
+	const PROCESS_DATA_PREFIX = '__Cundd_VisDataPrefix__';
+	const PROCESS_ID_PREFIX = 'process_cundd_';
+	const PROCESS_OUTPUT_SUFFIX = '_output';
+	
+	const GRID_REMOTE_CONTROLLER_VAR_PREFIX = '__Cundd_GridControllerPrefix__';
+	
+	
+	
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Der Konstruktor überprüft ob das temporäre Verzeichnis existiert.
+	 */
+	public function __construct(array $arguments = array()){
+		CunddPath::checkIfTempDirIsWritableElseCreate(true);
+		return parent::__construct($arguments);
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// DATA PACKING AND UNPACKING
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode erzeugt den zu sendenden Parameter-String.
+	* @return string
+	*/
+	protected function _prepareParameters(){
+		$tempString = '';
+		foreach($this->parameters as $name => $value){
+			// Überprüfen ob der Parameter serialisiert werden muss
+			if(gettype($value) == 'string'){
+				$tempString .= rawurlencode($name).'='.rawurlencode($value).'&';
+			} else {
+				$tempString .= self::SERIALIZED_PREFIX . rawurlencode($name).'='.rawurlencode(serialize($value)).'&';
+			}
+		}
+
+		// Add the process-D
+		$tempString .= self::PROCESS_DATA_PREFIX.'_processId='.rawurlencode($this->_processId).'&';
+
+		$tempString = str_replace('&',self::AMP_REPLACEMENT,$tempString);
+
+		$this->_parameterString = $tempString;
+		return $this->_parameterString;
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode bereitet die Parameter nach der Übergabe auf.
+	* @param string $parameterString
+	* @return array
+	*/
+	protected function _unpackParameters($parameterString){
+		$argumentsForNewController = array();
+		$parameterString = str_replace(self::AMP_REPLACEMENT,'&',$parameterString);
+		parse_str($parameterString,$argumentsForNewController);
+
+		$this->parameters = array();
+		foreach($argumentsForNewController as $key => $value){
+			if(strpos($key,self::SERIALIZED_PREFIX) !== false){ // Es wurde serialisiert
+				$varName = stripslashes(rawurldecode(str_replace(self::SERIALIZED_PREFIX,'',$key)));
+				$varValue = unserialize(stripslashes(rawurldecode($value)));
+				$this->parameters[$varName] = $varValue;
+			} else {
+				$this->parameters[stripslashes(rawurldecode($key))] = stripslashes(rawurldecode($value));
+			}
+		}
+		$_GET = $this->parameters;
+		Cundd::registry(self::PROCESS_DATA_PREFIX.'parameter',$parameterString);
+		
+		return $argumentsForNewController;
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// STATE
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	 * Die Methode setzt den Status auf $state.
+	 * @param int $state
+	 * @return boolean
+	 */
+	abstract public function setState($state);
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode gibt den aktuellen Status zurück.
+	* @return int
+	*/
+	public function getState(){
+		for($i = 100;$i > 0;$i--){
+			if($this->didPassState($i)){
+				return $i;
+			}
+		}
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	 * Die Methode gibt zurück ob ein Process einen bestimmten Status erreicht hat.
+	 * @param int $state
+	 * @return boolean
+	 */
+	abstract public function didPassState($state);
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// DISPATCH
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode ermittelt die Process-Id.
+	* @return int
+	*/
+	protected function _createProcessId(){
+		$this->_processId = self::PROCESS_ID_PREFIX . time();
+		return $this->_processId;
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// AFTER DISPATCH METHODS
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	 * Die Methode beendet den Process.
+	 * @param boolean $force[optional]
+	 * @return boolean
+	 */
+	abstract public function kill($force = false);
+	/**
+	 * @see kill()
+	 */
+	public function cancel($force = false){
+		return $this->kill($force);
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode überprüft ob der Process noch immer ausgeführt wird.
+	* @return boolean
+	*/
+	abstract public function isAlive();
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// CLEANUP
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Die Methode löscht den Cache des Process.
+	 */
+	abstract public function cleanup();
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// GETTERS
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode gibt den zusammengestellten Aufruf zurück.
+	* @return string
+	*/
+	public function getCommand(){
+		return $this->_command;
+	}
+	
+
+
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode gibt den PID zurück.
+	* @return string
+	*/
+	public function getPid(){
+		return $this->_pid;
+	}
+	
+
+
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode gibt die process-id zurück.
+	* @return string
+	*/
+	public function getProcessId(){
+		return $this->_processId;
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	* Die Methode gibt den remote-output zurück.
+	* @return string
+	*/
+	abstract public function getOutput();
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// STATIC
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+
+
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/**
+	 * Die Methode zwingt das Skript zum Warten bis alle Processes beendet sind.
+	 * @param Cundd_Vis_Model_Abstract $process [, Cundd_Vis_Model_Abstract $process2 [, Cundd_Vis_Model_Abstract $... ]]
+	 * @return int
+	 */
+	public static function waitFor(Cundd_Vis_Model_Abstract $processX){
+		$say = false;
+		$allComplete = false;
+		$startTime = time();
+		$counter = 0;
+		
+		foreach(func_get_args() as $process){
+			if($process->didPassState(self::STATE_COMPLETE) OR $process->didPassState(self::STATE_CANCELED)){
+				$allComplete = true;
+			} else {
+				$allComplete = false;
+				break;
+			}
+		}
+
+		while(!$allComplete AND $counter < 100){ // Wait and then check again
+			sleep(rand(1,2));
+			$allComplete = false;
+			foreach(func_get_args() as $process){
+				// DEBUGGEN
+				if($say){
+					CunddTools::pd($process->didPassState(self::STATE_COMPLETE));
+					CunddTools::pd($process->didPassState(self::STATE_CANCELED));
+					echo '<br/>';
+				}
+				// DEBUGGEN
+				
+				
+				if($process->didPassState(self::STATE_COMPLETE) OR $process->didPassState(self::STATE_CANCELED)){
+					$allComplete = true;
+				} else {
+					$allComplete = false;
+					break;
+				}
+			}
+			
+			$counter++;
+		}
+		
+		// Return the duration
+		return time() - $startTime;
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//
+	// CONFIG
+	//
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+
+
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/* (non-PHPdoc)
+	* @see Cundd/klassen/Cundd/Core/Cundd_Core_Abstract#_isMutable()
+	*/
+	protected function _isMutable(){
+		return false;
+	}
+	protected function _isPersistent(){
+		return false;
+	}
+	protected function _managedMode(){
+		return self::CUNDD_MANAGED_MODE_NONE;
+	}
+}
+?>

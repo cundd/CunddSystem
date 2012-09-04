@@ -1,0 +1,18 @@
+<?php
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+/**
+ * @license 
+ * @copyright 
+ * Die Klasse Cundd_Terminal_controllers_AbstractController erweitert Cundd_Core_controllers_AbstractController.
+ * @package Cundd_Terminal
+ * @version 1.0
+ * @since Feb 5, 2010
+ * @author daniel
+ */
+class Cundd_Terminal_controllers_AbstractController extends Cundd_Core_controllers_AbstractController{
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	// Variablen deklarieren
+}
+?>

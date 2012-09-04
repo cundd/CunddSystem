@@ -1,0 +1,45 @@
+<?php
+/**
+ * @license
+ * @copyright
+ * @package Demo_Form
+ * @version 1.0
+ * @since Feb 23, 2010
+ * @author daniel
+ */
+/*
+ * Uncomment the return statement to disable this template */
+// return false
+/*
+ *
+ */
+?>
+<div class="description">
+<p>CunddForm kann zum Erstellen von (einfachen) Formularen verwendet werden. 
+An den Konstruktor wird ein Array mit den gewünschten Inputs, die Aktion die 
+ausgeführt werden soll (per POST, GET, oder mittels Ajax verarbeitet). 
+Zusätzliche optionale Parameter sind der Name des Formulars, das Recht des 
+aktuellen Benutzers, die ID des Target-DIVs bei Ajax-Aufrufen, sowie ein Array
+mit weiteren Optionen für das Formular.</p>
+<div class="code">
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #4d8086;">$inputs <span style="color: #000000;">= </span><span style="color: #bc23a0;">array</span><span style="color: #000000;">(</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #d22723;"><span style="color: #bc23a0;">array</span><span style="color: #000000;">(</span>'firstname'<span style="color: #000000;">,</span>'text'<span style="color: #000000;">,</span><span style="color: #bc23a0;">array</span><span style="color: #000000;">(</span>'label' <span style="color: #000000;">=&gt; </span>'Vorname'<span style="color: #000000;">)),</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #d22723;"><span style="color: #bc23a0;">array</span><span style="color: #000000;">(</span>'lastname'<span style="color: #000000;">,</span>'text'<span style="color: #000000;">,</span><span style="color: #bc23a0;">array</span><span style="color: #000000;">(</span>'label' <span style="color: #000000;">=&gt; </span>'Nachname'<span style="color: #000000;">)),</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #d22723;"><span style="color: #bc23a0;">array</span><span style="color: #000000;">(</span>'active'<span style="color: #000000;">,</span>'radioOnOff'<span style="color: #000000;">,</span><span style="color: #bc23a0;">array</span><span style="color: #000000;">(</span>'label' <span style="color: #000000;">=&gt; </span>'Aktiv'<span style="color: #000000;">)),</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #d22723;"><span style="color: #000000;">);</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #d22723;"><span style="color: #4d8086;">$formname </span><span style="color: #000000;">= </span>'Demo_Form_Start'<span style="color: #000000;">;</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #4d8086;">$form <span style="color: #000000;">= </span><span style="color: #bc23a0;">new </span><span style="color: #000000;">CunddForm(</span>$inputs<span style="color: #000000;">,</span><span style="color: #d22723;">'POST:form_show.html'</span><span style="color: #000000;">,</span>$formname<span style="color: #000000;">);</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$form</span><span style="color: #000000;">-&gt;render();</span></p>
+</div>
+</div>
+<?php
+// Display a Form
+$inputs = array(
+array('firstname','text',array('label' => 'Vorname')),
+array('lastname','text',array('label' => 'Nachname')),
+array('active','radioOnOff',array('label' => 'Aktiv')),
+);
+$formname = 'Demo_Form_Start';
+$form = new CunddForm($inputs,'POST:form_show.html',$formname);
+$form->render();
+?>

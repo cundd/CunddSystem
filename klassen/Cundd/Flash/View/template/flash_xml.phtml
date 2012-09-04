@@ -1,0 +1,18 @@
+<?php echo '<?xml version="1.0"?>' ?>
+<cundd_flash>
+	<version>0.1.0</version>
+	<setup>
+	<?php 
+	foreach($this->setup as $key => $value){
+		echo "<$key>$value</$key>
+		";
+	}
+	?>
+	</setup>
+	
+	<objects>
+	<?php 
+	echo $this->partialLoop('object.phtml', $this->objects);
+	?>
+	</objects>
+</cundd_flash>

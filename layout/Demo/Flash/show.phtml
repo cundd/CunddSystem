@@ -1,0 +1,20 @@
+<?php
+/**
+ * @license 
+ * @copyright 
+ * @package Demo_Flash
+ * @version 1.0
+ * @since Feb 23, 2010
+ * @author daniel
+ */
+/* 
+ * Uncomment the return statement to disable this template */
+// return false
+/*
+ * 
+ */
+$numberUserInput = Cundd_Request::getPara('numberOfObjects');
+Cundd_Session::set('numberOfObjects',$numberUserInput);
+echo $numberUserInput;
+?>
+

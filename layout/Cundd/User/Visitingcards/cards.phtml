@@ -1,0 +1,38 @@
+<?php
+/**
+ * CundD
+ *
+ * @category   design_default
+ * @package    Cundd_Benutzer
+ * @copyright  Copyright (c) 2009 Daniel Corn (http://www.cundd.net)
+ */
+/* 
+ * Uncomment the return statement to disable this template */
+// return false
+/*
+ * 
+ */
+
+$imgLinkObject = $this->p('bildlink');
+if($imgLinkObject[0]){
+	$imgLink = $imgLinkObject[0];
+} else {
+	$imgLink = './pics/just_gray.png';
+}
+?>
+
+<table class="visitingcard">
+	<thead></thead>
+	<tbody>
+		<tr class="row_name">
+			<td rowspan=3  class="col_pic"><img src="<?php echo $imgLink ?>" width="48" height="62" /></td>
+			<td class="col_name"><?php echo $this->p('vorname').' '.$this->p('nachname').', '.$this->p('funktion') ?></td>
+		</tr>
+		<tr class="row_tel">
+			<td class="col_tel">Tel: <?php echo $this->p('telefon') ?></td>
+		</tr>
+		<tr class="row_mail">
+			<td class="col_mail"><a href="mailto:<?php echo $this->p('email') ?>"><?php echo $this->p('email') ?></a></td>
+		</tr>
+	</tbody>
+</table>

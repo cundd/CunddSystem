@@ -1,0 +1,72 @@
+<object id="<?php echo $this->schluessel ?>">
+	<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : object.xml
+    Created on : July 16, 2010, 4:31 PM
+    Author     : daniel
+    Description:
+        Purpose of the document follows.
+-->
+
+    <title>
+	<?php echo $this->title ?>
+    </title>
+    <dateiname>
+	<?php echo $this->dateiname ?>
+    </dateiname>
+    <originalname>
+	<?php echo $this->originalname ?>
+    </originalname>
+    <parent>
+	<?php echo $this->parent ?>
+    </parent>
+    <beschreibung>
+	<?php echo $this->beschreibung ?>
+    </beschreibung>
+    <tags>
+	<?php echo $this->tags ?>
+    </tags>
+    <copyright>
+	<?php echo $this->copyright ?>
+    </copyright>
+    <type>
+	<?php echo $this->type ?>
+    </type>
+    <size>
+	<?php echo $this->size ?>
+    </size>
+    <ersteller>
+	<?php echo $this->ersteller ?>
+    </ersteller>
+    <erstellungsdatum>
+	<?php echo $this->erstellungsdatum ?>
+    </erstellungsdatum>
+    <erstellungszeit>
+	<?php echo $this->erstellungszeit ?>
+    </erstellungszeit>
+    <bearbeiter>
+	<?php echo $this->bearbeiter ?>
+    </bearbeiter>
+    <bearbeitungsdatum>
+	<?php echo $this->bearbeitunsdatum ?>
+    </bearbeitungsdatum>
+    <bearbeitungszeit>
+	<?php echo $this->bearbeitungszeit ?>
+    </bearbeitungszeit>
+    <rechte>
+	<?php echo $this->rechte ?>
+    </rechte>
+    <gruppe>
+	<?php echo $this->gruppe ?>
+    </gruppe>
+    <geloescht>
+	<?php echo $this->geloescht ?>
+    </geloescht>
+    <attribute>
+	<?php echo $this->attribute ?>
+    </attribute>
+    <schluessel>
+	<?php echo $this->schluessel ?>
+    </schluessel>
+</object>

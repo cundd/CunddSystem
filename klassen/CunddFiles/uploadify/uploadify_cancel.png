@@ -1,0 +1,534 @@
+<?php
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+/* Diese Klasse dient als System-Controller und -Router. */
+class CunddController{
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	// Variablen deklarieren
+	var $kind; // Speichert die Instanz des Moduls, das von CunddController aufgerufen wird
+	
+	private $name = 'CunddController';
+	private $fallback;
+	private $debug = false;
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	// Konstruktor
+	function CunddController($internCall = NULL){
+		$this->init($internCall);
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/* Die Methode ist der Router des CunddSystems. */
+	function init($internCall = NULL){
+		// Lokale Konfigurationen
+		$say = false;
+		
+		$sayAufruf = true;
+		$logSay = true;
+		$ignoreEmpty =true;
+		
+		ini_set("display_errors",1);
+		ini_set("error_reporting",E_ALL ^ E_NOTICE);
+		//ini_set("error_reporting",E_ALL);
+		
+		
+		// Falls die Anfrage umgeleitet wurde wird sie hier verarbeitet
+		$request = $this->routeFromRewrite();
+		
+		//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+		// Den für diese Instanz gültigen Aufruf ermitteln
+		$validMode;
+		/* Wenn CunddAjax() systemintern (z.B. von CunddContent) aufgerufen wurde: */
+		if($internCall AND !$this->isDownloadRequest()){
+			$aufruf = $internCall;
+			if($internCall == 'initOnly'){
+				$aufruf = 'initOnly';
+			}
+			$validMode = 'internCall';
+		/* Wenn der Aufruf per GET erlaubt und $_POST['aufruf'] nicht gesetzt ist: */
+		} else if($this->isDownloadRequest()){
+			if($_GET['download']){
+				$fileId = $_GET['download'];
+			} else if($_GET['Download']){
+				$fileId = $_GET['Download'];
+			}
+			$aufruf = 'CunddFiles::provideDownload('.$fileId.')';
+			$validMode = 'download';
+		} else if($_POST["aufruf"]){
+			$aufruf = $_POST["aufruf"];
+			$validMode = 'post';
+		} else if($request['action']){
+			$aufruf = $request["action"];
+			$para = $request["para"];
+			$validMode = 'request';
+		} else if(CunddConfig::get('CunddController_allow_get') AND !$_POST["aufruf"]){
+			$aufruf = $_GET["aufruf"];
+			$validMode = 'get';
+		}
+		
+		/* 
+		//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+		// Aufruf zerlegen und den eigentlichen Aufruf extrahieren
+		$aufruf_und_para = explode("(",$aufruf);
+		$aufruf = $aufruf_und_para[0];
+		
+		
+		//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+		// Parameter extrahieren
+		$para = str_replace(')','',$aufruf_und_para[1]);
+		$para = explode(",",$para);
+		/* */
+		$para = array();
+		self::stringToActionAndPara($aufruf,$aufruf,$para);
+		
+		
+		// $_POST['data']an $para anhängen		
+		if(!isset($para['data']) AND $_POST['data']){
+			$para['data'] = $_POST['data'];
+		} else if(!isset($para['data'])){
+			$para['data'] = $para[0];
+		} else if($_POST['data']){
+			$para[] = $_POST['data'];
+		}
+		
+		
+		
+		// Diese Instanz global speichern
+		$this->publish();
+		
+		
+		// Die Sprache updaten
+		CunddLang::update();
+		
+		
+		
+		// Den Aufruf als JavaScript-Variable zurückgeben
+		/*
+		 echo '<script type="text/javascript">alert("HI");CunddAjaxAufruf_alt = "'.$aufruf.'";</script>';
+		 //*/
+		
+		
+		// DEBUGGEN:
+		if($say OR CunddConfig::get('controller_display_debug_all')){
+			CunddTools::pd($_POST);
+			//CunddTools::pd($_FILES);
+			//CunddTools::pd($_SESSION);
+			$echoString .=  CunddConfig::get('prefix').'<br />';
+			$echoString = "\$_POST aufruf=".$_POST["aufruf"].'<br />';
+			$echoString .= "\$_GET aufruf=".$_GET["aufruf"].'<br />';
+			$echoString .= '$aufruf = '.$aufruf.'<br />';
+			$echoString .= '$validMode = '.$validMode.'<br />';
+			$echoString .= '$request = '.var_export($request,true).'<br />';
+			echo $echoString;
+			
+			if($logSay){
+				CunddTools::log("CunddController",$echoString);
+			}
+		}
+		// DEBUGGEN
+		
+		$aufruf = $this->checkIfFallback($aufruf);
+		
+		// Überprüfen welches PHP-Skript aufgerufen werden soll
+		switch($aufruf){
+			case "CunddBlog":
+				$this->kind = new CunddBlog($para[0],$para[1],$para[2]);
+				break;
+				
+			case "CunddInhalt":
+				$this->kind = new CunddInhalt();
+				break;
+				
+			case "CunddInhalt::loeschen":
+			case "CunddInhalt::delete":
+				$this->kind = CunddInhalt::loeschen();
+				break;
+				
+			case "CunddBenutzer::show":
+			case "CunddUser::show":
+				$this->kind = CunddBenutzer::show();
+				break;
+				
+			case "CunddBenutzer":
+			case "CunddBenutzer::neu":
+			case "CunddBenutzer::edit":
+			case "CunddUser":
+			case "CunddUser::neu":
+			case "CunddUser::edit":
+				$this->kind = new CunddBenutzer();
+				break;
+				
+			case "CunddBenutzer::showVC":
+			case "CunddBenutzer::visitingCards":
+			case "CunddUser::showVC":
+			case "CunddUser::visitingCards":
+				$this->kind = new CunddUser_Visitingcard();
+				$this->kind->render();
+				break;
+			
+			case "CunddUser_Visitingcard":
+				$this->kind = new CunddUser_Visitingcard();
+				break;
+				
+			case "CunddLogin":
+				$this->kind = new CunddLogin();
+				break;
+				
+			case "CunddLogin::logout":
+			case "CunddLogin::out":
+				$this->kind = CunddLogin::logout();
+				break;
+				
+			case "CunddLink":
+				$this->kind = new CunddLink($para[0]);
+				break;
+			
+			case "CunddLink::newLink":
+				$this->kind = CunddLink::newLink($para[0],$para[1]);
+				break;
+				
+			case "CunddMSG":
+				$this->kind = new CunddMSG();
+				break;
+				
+			case "CunddMSG::new":
+				$this->kind = CunddMSG::new_msg($para[0], $para[1], $para[2], $para[3], $para[4], $para[6]);
+				break;
+				
+			case "CunddMSG::detail":
+			case "CunddMSG::msg_detail":
+				$this->kind = CunddMSG::msg_detail();
+				break;
+				
+			case "CunddFiles":
+			case "CunddFiles::new":
+				$this->kind = new CunddFiles();
+				break;
+			
+			case "CunddFiles::provideDownloadLink":
+				$this->kind = CunddFiles::provide_download($para["data"]);
+				break;
+				
+			case "CunddFiles::provideDownload":
+			case "CunddFiles::provide_download":
+			case "download":
+			case "Download":
+				$this->kind = CunddFiles::provide_download($para["data"]);
+				break;
+				
+			case "CunddFiles::edit":
+				$this->kind = CunddFiles::edit();
+				break;
+				
+			case "CunddFiles::delete":
+				$this->kind = CunddFiles::delete($para['data']);
+				break;
+				
+			case "CunddFiles::newGroup":
+				$this->kind = CunddFiles::newGroup();
+				break;
+				
+			case "CunddFiles::printAllWithDelete":
+				$this->kind = CunddFiles::printAllWithDelete();
+				break;
+				
+			case "CunddCalendar":
+				$this->kind = new CunddCalendar($para[0]);
+				break;
+				
+			case "CunddCalendar::render":
+				$this->kind = new CunddCalendar("render");
+				break;
+				
+			case "CunddAlbum":
+				$this->kind = new CunddAlbum($para[0]);
+				break;
+				
+			case "CunddImages":
+				$this->kind = new CunddImages();
+				$this->kind->show();
+				break;
+				
+			case "CunddAlbum::next":
+				$this->kind = new CunddAlbum();
+				$this->kind->next();
+				break;
+				
+			case "CunddImages::next":
+				$this->kind = new CunddImages();
+				$this->kind->next();
+				break;
+				
+			case "CunddAlbum::previous":
+				$this->kind = new CunddAlbum();
+				$this->kind->previous();
+				break;
+				
+			case "CunddImages::previous":
+				$this->kind = new CunddImages();
+				$this->kind->previous();
+				break;
+				
+			case "CunddAlbum::first":
+				$this->kind = new CunddAlbum();
+				$this->kind->first();
+				break;
+
+			case "CunddImages::first":
+				$this->kind = new CunddImages();
+				$this->kind->first();
+				break;
+			
+			case "CunddAlbum::last":
+				$this->kind = new CunddAlbum();
+				$this->kind->last();
+				break;
+				
+			case "CunddImages::last":
+				$this->kind = new CunddImages();
+				$this->kind->last();
+				break;
+				
+			case "CunddAlbum::stepOut":
+				$this->kind = new CunddAlbum();
+				$this->kind->stepOut();
+				break;
+				
+			case "CunddImages::stepOut":
+				$this->kind = new CunddImages();
+				$this->kind->stepOut();
+				break;
+				
+			case "CunddImages::stepInto":
+				$this->kind = new CunddImages();
+				$this->kind->stepInto($para['data']);
+				$this->kind->stepOutLink();
+				break;
+				
+			case "CunddAlbum::stepInto":
+				$this->kind = new CunddAlbum();
+				$this->kind->stepInto($para['data']);
+				$this->kind->stepOutLink();
+				break;
+				
+			case "CunddImages::printDetail":
+			case "CunddAlbum::printDetail":
+				$this->kind = new CunddAlbum();
+				$this->kind->printDetail($para['data']);
+				$temp = new CunddContent('CunddGalerie::stepInto');
+				break;
+				
+			case "CunddImages::printOverview":
+			case "CunddAlbum::printOverview":
+				$this->kind = new CunddAlbum();
+				$this->kind->printOverview();
+				$this->kind->stepOutLink();
+				break;
+				
+			case "CunddGalerie::printDetailOfSelf":
+				$this->kind->printDetailOfSelf($para[0]);
+				$this->kind->createAllSiblingLinks();
+				break;
+				
+			case "CunddGalerie::printSingle":
+				$this->kind->printSingle($para[0]);
+				$this->kind->createAllSiblingLinks();
+				break;
+				
+			case "CunddContent":
+				$this->kind = new CunddContent($para['data']);
+				break;
+			
+			case "CunddContent::save":
+				$this->kind = CunddContent::safe();
+				break;
+			
+			case "CunddTemplate":
+				$this->kind = new CunddTemplate($para[0],$para);
+				break;
+				
+			case "CunddTerminal":
+				$this->kind = new CunddTerminal();
+				break;
+				
+				
+				
+			case "initOnly":
+				break;
+				
+			case "": // Empty: Wird ignoriert wenn $ignoreEmpty = true
+				if($ignoreEmpty){
+					break;
+				} else {
+					// dont break
+				}
+				
+			default:
+				// Den Aufruf an CunddContent senden
+				$content = $this->tryContent($aufruf);
+				if(!$content AND CunddConfig::get('allow_controller_redirect')){
+					echo '<script type="text/javascript">
+					//javascript-redirect
+					window.location="/'.$aufruf.'";
+					</script>';
+				}
+				
+				if($this->debug){
+					echo '<div class="CunddDebug">CunddController:<br />';
+					if(!$content) echo 'Beim Aufruf von "CunddController" ist ein Fehler aufgetreten.';
+					echo '<h3>Aufruf:</h3>';
+					CunddTools::pd($aufruf);
+					echo '<h3>Parameter:</h3>';
+					echo '<pre>$_GET:';
+					var_dump($_GET);
+					
+					echo '$_POST:';
+					var_dump($_POST);
+					
+					echo '$para:';
+					var_dump($para);
+					echo '$internCall:'.$internCall;
+					echo '</pre>';
+					echo '</div>';
+				}
+		}
+		
+		
+		// Diese Instanz global speichern
+		$this->publish();
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/* Die Methode speichert diese Instanz global. */
+	function publish(){
+		$GLOBALS['CunddController'] = $this;
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/* Die Methode löst die umgeleitete URL in die einzelnen Variablen auf. */
+	function routeFromRewrite(){
+		$request = NULL;
+		if(CunddRequest::init()){
+			$request["action"] = CunddRequest::getAction();
+			$request["para"] = CunddRequest::getPara();
+		} else {
+			CunddTools::error('CunddController','Error while init of CunddRequest.');
+		}
+		return $request;
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/* Die Methode aktualisiert die Sprachwahl. */
+	/*function updateLang(){
+		if($_GET['lang']){
+			$GLOBALS['CunddLang'] = $_GET['lang'];
+		} else if($_POST['lang']){
+			$GLOBALS['CunddLang'] = $_POST['lang'];
+		}
+	}/* */
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Die Methode überprüft ob ein Download eingeleitet werden soll.
+	 * @return boolean|boolean
+	 */
+	private function isDownloadRequest(){
+		if(array_key_exists('download',$_GET) OR array_key_exists('Download',$_GET)){
+			return (bool) true;
+		} else {
+			return (bool) false;
+		}
+	}
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Die Methode übergibt den Aufruf an CunddContent. */
+	private function tryContent($aufruf){
+		$aufruf = CunddTools::cleanString($aufruf);
+		return new CunddContent($aufruf);
+	}
+	
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Die Methode teilt einen übergebenen String in die Aktion und die Parameter.
+	 * @param string $string
+	 * @param string $action
+	 * @param string|array $para
+	 * @return array
+	 */
+	public static function stringToActionAndPara($string,&$action = NULL,&$para = NULL){
+		return CunddTools::stringToActionAndPara($string,&$action,&$para);
+	}
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Die Methode überprüft ob ein Aufruf ermittelt wurde, wenn nicht wird der Fallback 
+	 * ausgeführt und sozusagen die "Home"-Seite dargestellt. */
+	/**
+	 * @param string $aufruf
+	 * @return string|string
+	 */
+	public function checkIfFallback(&$aufruf){
+		if(!isset($aufruf)){
+			$aufruf = $this->getFallback();
+			return $aufruf;
+		} else {
+			return $aufruf;
+		}
+	}
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Die Methode setzt die Eigenschaft $fallback, die den Aufruf definiert, wenn keiner 
+	 * definiert ist.
+	 * @param string $newFallback
+	 * @return void
+	 */
+	public function setFallback($newFallback){
+		$this->fallback = $newFallback;
+	}
+	
+	
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+	/** 
+	 * Die Methode gibt die Eigenschaft $fallback zurück. Wenn der Wert nicht gesetzt ist 
+	 * wird er auf den Wert in der Konfigurationsdatei gesetzt.
+	 * @return string
+	 */
+	private function getFallback(){
+		if(!isset($this->fallback)){
+			$this->setFallback(CunddConfig::__('Cundd_Controller_Fallback'));
+		}
+		return $this->fallback;
+	}
+}
+
+?>

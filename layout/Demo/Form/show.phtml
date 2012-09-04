@@ -1,0 +1,29 @@
+<?php
+/**
+ * @license 
+ * @copyright 
+ * @package Demo_Form
+ * @version 1.0
+ * @since Feb 23, 2010
+ * @author daniel
+ */
+/* 
+ * Uncomment the return statement to disable this template */
+// return false
+/*
+ * 
+ */
+if(!Cundd_Request::getPara('firstname') AND !Cundd_Request::getPara('lastname') AND !Cundd_Request::getPara('active')){
+	echo '<div><p>Keine Daten übermittelt.</p></div>';
+	return;
+}
+?>
+<p><?php echo Cundd_Request::getPara('firstname').' '.Cundd_Request::getPara('lastname')?>
+<?php 
+if(Cundd_Request::getPara('active')){
+	echo " ist aktiv.";
+} else {
+	echo " ist nicht aktiv.";
+}
+?>
+</p>

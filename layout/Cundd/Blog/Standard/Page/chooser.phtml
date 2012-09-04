@@ -1,0 +1,71 @@
+<?php
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+/**
+ * @license
+ * @copyright
+ * @package Cundd_Blog_Standard_Page_Chooser
+ * @version 1.0
+ * @since Sep 4, 2010
+ * @author Chooser
+ */
+/*
+ * Uncomment the return statement to disable this template */
+// return false
+/*
+ *
+ */
+$text = '';
+if($this->p('previous')->getValue() === (bool)true){
+    $text = Cundd_Lang::get('CunddBlog/previous page');
+
+    $prevPage = $this->p('currentPage')->getValue() - 1;
+    $prevAction = 'Blog/Index';
+    $data = CunddBlogLesen::CUNDD_BLOG_CURRENT_PAGE_KEY.'='.$prevPage.'&table='.$this->p('table')->getValue();
+    echo CunddLink::newSoftLink($text, $prevAction, $divToChange, $data);
+}
+
+
+echo ' ';
+
+
+if($this->p('next')->getValue() === (bool)true){
+    $text = Cundd_Lang::get('CunddBlog/next page');
+    
+    $nextPage = $this->p('currentPage')->getValue() + 1;
+    $nextAction = 'Blog/Index';
+    $data = CunddBlogLesen::CUNDD_BLOG_CURRENT_PAGE_KEY.'='.$nextPage.'&table='.$this->p('table')->getValue();
+    echo CunddLink::newSoftLink($text, $nextAction, $divToChange, $data);
+}
+
+//MWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMWMW
+return;
+
+
+$text = '';
+if($this->p('previous')->getValue() === (bool)true){
+    $text = Cundd_Lang::get('CunddBlog/previous page');
+
+    $prevPage = $this->p('currentPage')->getValue() - 1;
+    $prevAction = '?'.CunddBlogLesen::CUNDD_BLOG_CURRENT_PAGE_KEY.'='.$prevPage;
+
+    $prevAction = 'Blog/Index';
+    $data = CunddBlogLesen::CUNDD_BLOG_CURRENT_PAGE_KEY.'='.$prevPage.'&table='.$this->p('table')->getValue();
+//    echo CunddLink::newHardLink($text, $prevAction);
+    echo CunddLink::newSoftLink($text, $prevAction, $divToChange, $data);
+}
+
+
+echo ' ';
+
+
+if($this->p('next')->getValue() === (bool)true){
+    $text = Cundd_Lang::get('CunddBlog/next page');
+
+    $nextPage = $this->p('currentPage')->getValue() + 1;
+    $nextAction = '?'.CunddBlogLesen::CUNDD_BLOG_CURRENT_PAGE_KEY.'='.$nextPage;
+
+    echo CunddLink::newHardLink($text, $nextAction);
+}
+
+?>

@@ -1,0 +1,63 @@
+<?php
+/**
+ * @license 
+ * @copyright 
+ * @package Demo_Vis
+ * @version 1.0
+ * @since Feb 23, 2010
+ * @author daniel
+ */
+/* 
+ * Uncomment the return statement to disable this template */
+// return false
+/*
+ * 
+ */
+?>
+<div class="description">
+<p>Das Modul Vis bietet zwei Verfahren zum Parallelisieren von Aufgaben in PHP. Die Process-Methode 
+ruft einen Controller im System auf. Dieser kann dann beliebige Skripts abarbeiten. Vis erlaubt hierbei 
+aber zum Einen diese Skripts vollständig im Hintergrund auszuführen, es ist aber auch möglich das Ende 
+des Prozesses abzuwarten. Analog können mehrere Prozesse nacheinander gestartet und parallel verarbeitet 
+werden, während das Hauptskript erst nach Beendigung der Prozesse weiter läuft.</p>
+<p>Die zweite Möglichkeit "Grid" baut auf der Process-Methode auf. Ein Prozess wird gestartet, welcher 
+eine Anfrage an einen entfernten Server sendet. Der entfernte PHP-Server überprüft die Berechtigung der 
+Anfrage mittels Accountname und Passwort, welche mit der Anfrage versandt werden. Während der Remote-Server 
+die Anfrage bearbeitet bleibt der lokale Prozess bereit das Ergebnis entgegen zu nehmen.</p>
+<p>Die Verständigung und Statusabfrage zwischen den Prozessen/Servern wird durch temporäre Dateien 
+realisiert. Diese werden (im Moment) standardmäßig nicht gelöscht, dadurch ist es möglich die Beendigung 
+eines Prozesses zu einem späteren Zeitpunkt zu überprüfen. Zur Identifikation der unterschiedlichen 
+Prozesse werden eindeutig IDs vergeben, mit deren Hilfe lässt sich der Verlauf eines Prozesses im 
+Nachhinein betrachten.</p>
+<div class="code">
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$process1 </span>= Cundd::process();</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$process1 </span>= <span style="color: #bc23a0;">new </span>Cundd_Vis_Model_Process();</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$process1</span>-&gt;controller = <span style="color: #d22723;">'Music/Color'</span>;</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$process1</span>-&gt;dispatch();</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;">CunddTools::pd(<span style="color: #4d8086;">$process1</span>-&gt;getCommand());</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; min-height: 13.0px;">&nbsp;</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$process2 </span>= Cundd::process();</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$process2</span>-&gt;controller = <span style="color: #d22723;">'Music/Color'</span>;</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;"><span style="color: #4d8086;">$process2</span>-&gt;dispatch();</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo;">CunddTools::pd(<span style="color: #4d8086;">$process2</span>-&gt;getCommand());</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; min-height: 13.0px;">&nbsp;</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #4d8086;">$process1<span style="color: #000000;">-&gt;waitFor(</span>$process1<span style="color: #000000;">,</span>$process2<span style="color: #000000;">);</span></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Menlo; color: #d22723;"><span style="color: #bc23a0;">echo </span>'Finish'<span style="color: #000000;">;</span></p></div>
+</div>
+<div class="output">
+<?php
+$process1 = Cundd::process();
+$process1 = new Cundd_Vis_Model_Process();
+$process1->controller = 'Music/Color';
+$process1->dispatch();
+CunddTools::pd($process1->getCommand());
+
+$process2 = Cundd::process();
+$process2->controller = 'Music/Color';
+$process2->dispatch();
+CunddTools::pd($process2->getCommand());
+
+$process1->waitFor($process1,$process2);
+echo 'Finish';
+?>
+</div>

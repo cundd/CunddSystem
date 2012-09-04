@@ -1,0 +1,20 @@
+<object id="<?php echo $this->id ?>">
+	<name><?php echo $this->title ?></name>
+	<type><?php echo $this->type ?></type>
+	<x><?php echo $this->x ?></x>
+	<y><?php echo $this->y ?></y>
+	<width><?php echo $this->width ?></width>
+	<height><?php echo $this->height ?></height>
+	<rotation><?php echo $this->rotation ?></rotation>
+	<alpha><?php echo $this->alpha ?></alpha>
+	<data>
+		<?php
+		if($this->data){
+			foreach($this->data as $key => $value){
+				echo "<$key>$value</$key>
+				";
+			}
+		}
+		?>
+	</data>
+</object>
